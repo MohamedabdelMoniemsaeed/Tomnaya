@@ -1,0 +1,6 @@
+{
+  "name": "تمناية - Tomnaya",
+  "description": "تطبيق ذكي لحجز سيارات التمناية والسوزوكي الفان 7 راكب، بحجز الكراسي الفردية أو المشوار المخصوص وتقديم عروض الأسعار.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
