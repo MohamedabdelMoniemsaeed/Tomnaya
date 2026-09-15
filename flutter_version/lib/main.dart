@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,7 +6,15 @@ import 'models/trip_model.dart';
 import 'widgets/seat_selector_widget.dart';
 import 'widgets/driver_dashboard.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await Firebase.initializeApp();
+  } catch (error) {
+    debugPrint('Firebase is not configured yet: $error');
+  }
+
   runApp(const TomnayaApp());
 }
 

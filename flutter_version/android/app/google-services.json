@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "730025884292",
+    "project_id": "tomnaya-711a2",
+    "storage_bucket": "tomnaya-711a2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730025884292:android:4b4210026ee525c733e0d1",
+        "android_client_info": {
+          "package_name": "com.aistudio.tomnaya.ride"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7ZaCi_h7wSQv8hV7_MgVyRFWQCXh8GV4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

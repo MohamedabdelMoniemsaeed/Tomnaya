@@ -188,9 +188,9 @@ class SeatSelectorWidget extends StatelessWidget {
       onTap: isOccupied ? null : () => onSeatToggled(index),
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: 72,
-        height: 68,
-        padding: const EdgeInsets.all(6),
+        width: 60,
+        height: 58,
+        padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(12),
@@ -204,15 +204,17 @@ class SeatSelectorWidget extends StatelessWidget {
           children: [
             Icon(
               isOccupied ? Icons.person : Icons.chair,
-              size: 24,
+              size: 20,
               color: isSelected ? const Color(0xFFF59E0B) : textColor,
             ),
             const SizedBox(height: 2),
             Text(
               isOccupied ? 'مشغول' : label,
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 color: textColor,
               ),
@@ -225,9 +227,9 @@ class SeatSelectorWidget extends StatelessWidget {
 
   Widget _buildFixedSeat({required IconData icon, required String label, required Color color}) {
     return Container(
-      width: 72,
-      height: 68,
-      padding: const EdgeInsets.all(6),
+      width: 60,
+      height: 58,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
@@ -236,9 +238,14 @@ class SeatSelectorWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 24, color: color),
+          Icon(icon, size: 20, color: color),
           const SizedBox(height: 2),
-          Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: color),
+          ),
         ],
       ),
     );

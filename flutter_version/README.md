@@ -25,6 +25,29 @@ flutter run
 
 ---
 
+## 🔥 إعداد Firebase
+
+1. أنشئ مشروع Firebase جديدًا أو استخدم مشروع موجودًا من [Firebase Console](https://console.firebase.google.com/).
+2. أضف التطبيق Android و iOS إلى المشروع ثم حمّل ملفات التهيئة:
+   - `android/app/google-services.json`
+   - `ios/Runner/GoogleService-Info.plist`
+3. إذا كنت تريد إنشاء ملفات التهيئة تلقائيًا، استخدم:
+
+```bash
+flutterfire configure
+```
+
+4. بعد ذلك، نفذ:
+
+```bash
+flutter pub get
+flutter run
+```
+
+> ملاحظة: التطبيق الآن جاهز لتهيئة Firebase، وإذا لم يتم إضافة ملفات المشروع بعد، سيتم إيقاف تهيئة Firebase بهدوء لعدم توقف التطبيق أثناء التطوير.
+
+---
+
 ## 📦 كيفية استخراج ملف الـ APK عبر Flutter:
 
 لاستخراج ملف الـ APK الخاص بالأندرويد عبر فلاتر:
