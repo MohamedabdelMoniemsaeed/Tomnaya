@@ -3,6 +3,8 @@ package com.example.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.data.cloud.CloudSyncStatus
+import com.example.data.cloud.TomnayaCloudService
 import com.example.data.local.TomnayaDatabase
 import com.example.data.model.DriverOffer
 import com.example.data.model.PopularRoute
@@ -63,12 +65,14 @@ data class TomnayaUiState(
     val driverOccupiedSeats: Int = 3,
     val driverTodayEarnings: Double = 420.0,
     val driverCompletedTripsCount: Int = 6,
-    val driverIncomingRequests: List<PassengerRequestForDriver> = emptyList()
+    val driverIncomingRequests: List<PassengerRequestForDriver> = emptyList(),
+    val showCloudDialog: Boolean = false
 )
 
 class TomnayaViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: TomnayaRepository
+    private val cloudService: TomnayaCloudService
     private var searchJob: Job? = null
     private var tripProgressJob: Job? = null
 
@@ -77,10 +81,13 @@ class TomnayaViewModel(application: Application) : AndroidViewModel(application)
 
     val tripHistory: StateFlow<List<TripBookingEntity>>
     val activeTrip: StateFlow<TripBookingEntity?>
+    val cloudStatus: StateFlow<CloudSyncStatus>
 
     init {
         val db = TomnayaDatabase.getInstance(application)
-        repository = TomnayaRepository(db.tripDao())
+        cloudService = TomnayaCloudService(application)
+        repository = TomnayaRepository(db.tripDao(), cloudService)
+        cloudStatus = repository.cloudStatus
 
         tripHistory = repository.allTrips
             .stateIn(
@@ -353,5 +360,18 @@ class TomnayaViewModel(application: Application) : AndroidViewModel(application)
             )
         )
         _uiState.value = _uiState.value.copy(driverIncomingRequests = sampleRequests)
+    }
+
+    fun setShowCloudDialog(show: Boolean) {
+        _uiState.value = _uiState.value.copy(showCloudDialog = show)
+    }
+
+    fun syncAllTripsToCloud() {
+        viewModelScope.launch {
+            val trips = tripHistory.value
+            for (trip in trips) {
+                repository.cloudService.uploadTripToCloud(trip)
+            }
+        }
     }
 }

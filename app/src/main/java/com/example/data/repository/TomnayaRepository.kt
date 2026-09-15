@@ -1,5 +1,7 @@
 package com.example.data.repository
 
+import com.example.data.cloud.CloudSyncStatus
+import com.example.data.cloud.TomnayaCloudService
 import com.example.data.local.TripDao
 import com.example.data.model.DriverOffer
 import com.example.data.model.PopularRoute
@@ -9,28 +11,47 @@ import com.example.data.model.TripBookingEntity
 import com.example.data.model.TripStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlin.random.Random
 
-class TomnayaRepository(private val tripDao: TripDao) {
+class TomnayaRepository(
+    private val tripDao: TripDao,
+    val cloudService: TomnayaCloudService
+) {
 
     val allTrips: Flow<List<TripBookingEntity>> = tripDao.getAllTrips()
     val activeTrip: Flow<TripBookingEntity?> = tripDao.getActiveTrip()
+    val cloudStatus: StateFlow<CloudSyncStatus> = cloudService.syncStatus
 
     fun getPopularRoutes(): List<PopularRoute> = PopularRoutesData.routes
 
-    suspend fun insertTrip(trip: TripBookingEntity): Long = tripDao.insertTrip(trip)
+    suspend fun insertTrip(trip: TripBookingEntity): Long {
+        val generatedId = tripDao.insertTrip(trip)
+        val tripWithId = trip.copy(id = generatedId)
+        // Auto sync to Cloud Firestore
+        cloudService.uploadTripToCloud(tripWithId)
+        return generatedId
+    }
 
     suspend fun updateTripStatus(tripId: Long, status: TripStatus) {
         tripDao.updateTripStatus(tripId, status.name)
+        // Sync status to Cloud
+        cloudService.updateTripStatusInCloud(tripId, status)
     }
 
     suspend fun rateTrip(tripId: Long, rating: Float) {
         tripDao.rateTrip(tripId, rating)
+        // Sync rating to Cloud
+        cloudService.updateTripStatusInCloud(tripId, TripStatus.COMPLETED, rating)
     }
 
     suspend fun deleteTrip(tripId: Long) {
         tripDao.deleteTrip(tripId)
+    }
+
+    suspend fun syncDriverLine(routeId: String, driverName: String, occupiedSeats: Int, isOnline: Boolean) {
+        cloudService.updateDriverLineInCloud(routeId, driverName, occupiedSeats, isOnline)
     }
 
     // InDrive style dynamic driver bidding simulation for Suzuki vans

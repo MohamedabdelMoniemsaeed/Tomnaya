@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -30,6 +33,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.cloud.CloudSyncStatus
+import com.example.ui.theme.EmeraldGreen
 import com.example.ui.theme.TomnayaGold
 import com.example.ui.theme.TomnayaGoldDark
 import com.example.ui.theme.TomnayaNavy
@@ -41,6 +46,8 @@ import com.example.viewmodel.AppMode
 fun TomnayaHeader(
     currentMode: AppMode,
     onModeToggle: (AppMode) -> Unit,
+    cloudStatus: CloudSyncStatus? = null,
+    onCloudClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -108,42 +115,67 @@ fun TomnayaHeader(
                     }
                 }
 
-                // Mode Switcher (Passenger / Driver)
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(TomnayaNavySurface)
-                        .clickable {
-                            val newMode = if (currentMode == AppMode.PASSENGER) AppMode.DRIVER else AppMode.PASSENGER
-                            onModeToggle(newMode)
-                        }
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                        .testTag("mode_switch_button")
+                // Controls: Cloud Status & Mode Switcher
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
+                    // Cloud Sync Button
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(TomnayaNavySurface)
+                            .clickable { onCloudClick() }
+                            .padding(6.dp)
+                            .testTag("cloud_status_button"),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = if (currentMode == AppMode.PASSENGER) Icons.Default.Person else Icons.Default.DirectionsCar,
-                            contentDescription = null,
-                            tint = TomnayaGold,
-                            modifier = Modifier.size(16.dp)
+                            imageVector = if (cloudStatus?.isConnected == true) Icons.Default.CloudDone else Icons.Default.CloudQueue,
+                            contentDescription = "حالة السحابة",
+                            tint = if (cloudStatus?.isConnected == true) EmeraldGreen else TomnayaGold,
+                            modifier = Modifier.size(20.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (currentMode == AppMode.PASSENGER) "وضع الراكب" else "وضع الكابتن",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.Default.SwapHoriz,
-                            contentDescription = "تبديل",
-                            tint = Color.White.copy(alpha = 0.6f),
-                            modifier = Modifier.size(14.dp)
-                        )
+                    }
+
+                    // Mode Switcher (Passenger / Driver)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(TomnayaNavySurface)
+                            .clickable {
+                                val newMode = if (currentMode == AppMode.PASSENGER) AppMode.DRIVER else AppMode.PASSENGER
+                                onModeToggle(newMode)
+                            }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                            .testTag("mode_switch_button")
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = if (currentMode == AppMode.PASSENGER) Icons.Default.Person else Icons.Default.DirectionsCar,
+                                contentDescription = null,
+                                tint = TomnayaGold,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (currentMode == AppMode.PASSENGER) "وضع الراكب" else "وضع الكابتن",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Default.SwapHoriz,
+                                contentDescription = "تبديل",
+                                tint = Color.White.copy(alpha = 0.6f),
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
                     }
                 }
             }

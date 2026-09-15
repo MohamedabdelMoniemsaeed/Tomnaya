@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.NearMe
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
@@ -143,6 +144,47 @@ fun LiveTrackingCard(
 
             // Interactive Live Map Canvas Simulation
             TomnayaMapCanvas(status = statusEnum)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Direct Real-time Google Maps Navigation Option
+            OutlinedButton(
+                onClick = {
+                    val gmmIntentUri = Uri.parse(
+                        "https://www.google.com/maps/dir/?api=1&origin=" +
+                                Uri.encode(trip.pickupLocation) +
+                                "&destination=" +
+                                Uri.encode(trip.dropoffLocation) +
+                                "&travelmode=driving"
+                    )
+                    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri).apply {
+                        setPackage("com.google.android.apps.maps")
+                    }
+                    try {
+                        context.startActivity(mapIntent)
+                    } catch (e: Exception) {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, gmmIntentUri))
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("open_live_google_maps_button"),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.NearMe,
+                    contentDescription = null,
+                    tint = TomnayaTeal,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "فتح الملاحة الحية على خرائط Google 🗺️",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TomnayaNavy
+                )
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 

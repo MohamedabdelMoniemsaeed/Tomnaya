@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.History
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.TripBookingEntity
+import com.example.ui.theme.EmeraldGreen
 import com.example.ui.theme.Slate400
 import com.example.ui.theme.TomnayaGold
 import com.example.ui.theme.TomnayaGoldDark
@@ -249,12 +251,33 @@ fun TripReceiptItem(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = formattedDate,
-                fontSize = 10.sp,
-                color = Slate400,
-                modifier = Modifier.align(Alignment.End)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.CloudDone,
+                        contentDescription = null,
+                        tint = EmeraldGreen,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "محفوظ سحابياً ☁️",
+                        fontSize = 10.sp,
+                        color = EmeraldGreen,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Text(
+                    text = formattedDate,
+                    fontSize = 10.sp,
+                    color = Slate400
+                )
+            }
         }
     }
 }

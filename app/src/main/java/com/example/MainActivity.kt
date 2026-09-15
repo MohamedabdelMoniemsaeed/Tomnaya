@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.components.CloudSyncDialog
 import com.example.ui.components.DriverDashboardView
 import com.example.ui.components.TomnayaHeader
 import com.example.ui.screens.BookingScreen
@@ -73,6 +74,15 @@ fun TomnayaApp(viewModel: TomnayaViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val tripHistory by viewModel.tripHistory.collectAsStateWithLifecycle()
     val activeTrip by viewModel.activeTrip.collectAsStateWithLifecycle()
+    val cloudStatus by viewModel.cloudStatus.collectAsStateWithLifecycle()
+
+    if (uiState.showCloudDialog) {
+        CloudSyncDialog(
+            status = cloudStatus,
+            onDismiss = { viewModel.setShowCloudDialog(false) },
+            onSyncNow = { viewModel.syncAllTripsToCloud() }
+        )
+    }
 
     Scaffold(
         modifier = Modifier
@@ -82,7 +92,9 @@ fun TomnayaApp(viewModel: TomnayaViewModel) {
             Box(modifier = Modifier.statusBarsPadding()) {
                 TomnayaHeader(
                     currentMode = uiState.appMode,
-                    onModeToggle = { viewModel.setAppMode(it) }
+                    onModeToggle = { viewModel.setAppMode(it) },
+                    cloudStatus = cloudStatus,
+                    onCloudClick = { viewModel.setShowCloudDialog(true) }
                 )
             }
         },
