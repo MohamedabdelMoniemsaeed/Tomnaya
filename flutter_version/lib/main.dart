@@ -332,6 +332,75 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
               ),
             ),
+            const SizedBox(height: 8),
+
+            // Quick Actions: Voice Alert & WhatsApp Safety
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('📢 تنبيه صوتي: انتبه! التمناية قربت من الموقف، استعد للركوب!')),
+                      );
+                    },
+                    icon: const Icon(Icons.volume_up, size: 16, color: Color(0xFFF59E0B)),
+                    label: const Text('تنبيه صوتي 📢', style: TextStyle(fontSize: 11)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F172A),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('🛡️ تم تجهيز رسالة أمان المشوار للمشاركة على واتساب!')),
+                      );
+                    },
+                    icon: const Icon(Icons.share, size: 16, color: Colors.white),
+                    label: const Text('أمان واتساب 🛡️', style: TextStyle(fontSize: 11)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF25D366),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Vodafone Cash & InstaPay
+            OutlinedButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (dCtx) => AlertDialog(
+                    title: const Text('دفع الأجرة (فودافون كاش / InstaPay)'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('المبلغ: ${_acceptedOffer!.offeredPriceEgp.toStringAsFixed(0)} ج.م',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
+                        const SizedBox(height: 8),
+                        Text('رقم كابتن السوزوكي: ${_acceptedOffer!.phone}'),
+                        const SizedBox(height: 4),
+                        Text('معرف InstaPay: ${_acceptedOffer!.phone}@instapay'),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('إغلاق')),
+                    ],
+                  ),
+                );
+              },
+              icon: const Icon(Icons.payment, color: Color(0xFFE60000), size: 18),
+              label: const Text('📲 الدفع السريع بـ (فودافون كاش و InstaPay)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(40)),
+            ),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () {

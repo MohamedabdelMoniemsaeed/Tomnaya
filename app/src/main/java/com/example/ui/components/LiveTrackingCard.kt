@@ -1,7 +1,15 @@
 package com.example.ui.components
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.speech.tts.TextToSpeech
+import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -11,6 +19,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,15 +33,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.NearMe
+import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -43,8 +57,13 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,6 +77,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.Locale
 import com.example.data.model.TripBookingEntity
 import com.example.data.model.TripStatus
 import com.example.ui.theme.Slate400
@@ -80,6 +100,40 @@ fun LiveTrackingCard(
         TripStatus.valueOf(trip.status)
     } catch (e: Exception) {
         TripStatus.ACCEPTED
+    }
+
+    var showPaymentDialog by remember { mutableStateOf(false) }
+    var ttsInstance by remember { mutableStateOf<TextToSpeech?>(null) }
+
+    DisposableEffect(context) {
+        val tts = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                try {
+                    ttsInstance?.language = Locale("ar")
+                } catch (e: Exception) {
+                    // ignore fallback
+                }
+            }
+        }
+        ttsInstance = tts
+        onDispose {
+            tts.stop()
+            tts.shutdown()
+        }
+    }
+
+    fun playArrivalVoiceAlert() {
+        val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator?.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(500)
+        }
+
+        val speechText = "انتبه! سيارة السوزوكي التمناية اقتربت من نقطة ركوبك، لوحة أرقام ${trip.carPlate}. برجاء الاستعداد للركوب."
+        ttsInstance?.speak(speechText, TextToSpeech.QUEUE_FLUSH, null, "TomnayaArrivalAudio")
+        Toast.makeText(context, "📢 تم تشغيل التنبيه الصوتي لاقتراب التمناية!", Toast.LENGTH_LONG).show()
     }
 
     Card(
@@ -322,6 +376,123 @@ fun LiveTrackingCard(
                 }
             }
 
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Quick Safety & Audio Alert Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Audio Arrival Alert Button
+                Button(
+                    onClick = { playArrivalVoiceAlert() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp)
+                        .testTag("voice_alert_button"),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = TomnayaNavy,
+                        contentColor = TomnayaGold
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.VolumeUp,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = TomnayaGold
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "تنبيه صوتي 📢",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                // WhatsApp Safety Share Button
+                Button(
+                    onClick = {
+                        val shareMessage = """
+🛡️ تفاصيل رحلتي على تطبيق تمناية (Tomnaya):
+📍 الركوب: ${trip.pickupLocation}
+🏁 الوصول: ${trip.dropoffLocation}
+🚐 كابتن السوزوكي: ${trip.driverName}
+📞 تليفون: ${trip.driverPhone}
+🔢 لوحة العربية: ${trip.carPlate} (${trip.carColor})
+💰 الأجرة: ${String.format("%.0f", trip.farePriceEgp)} ج.م
+🔒 أنا في طريقي الآن بأمان مع تمناية.
+                        """.trimIndent()
+
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_TEXT, shareMessage)
+                            `package` = "com.whatsapp"
+                        }
+                        try {
+                            context.startActivity(sendIntent)
+                        } catch (e: Exception) {
+                            val genericIntent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, shareMessage)
+                            }
+                            context.startActivity(Intent.createChooser(genericIntent, "مشاركة تفاصيل المشوار لأهلك 🛡️"))
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(44.dp)
+                        .testTag("whatsapp_safety_button"),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF25D366),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "أمان واتساب 🛡️",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Vodafone Cash & InstaPay Payment Button
+            OutlinedButton(
+                onClick = { showPaymentDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .testTag("open_vodafone_instapay_button"),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = TomnayaNavy
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Payment,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = Color(0xFFE60000)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "📲 الدفع السريع بـ (فودافون كاش و InstaPay)",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TomnayaNavy
+                )
+            }
+
             Spacer(modifier = Modifier.height(14.dp))
 
             // Action Buttons (Complete, Safety, Cancel)
@@ -393,8 +564,221 @@ fun LiveTrackingCard(
                     }
                 }
             }
+
+            if (showPaymentDialog) {
+                VodafoneInstaPayPaymentDialog(
+                    trip = trip,
+                    onDismiss = { showPaymentDialog = false }
+                )
+            }
         }
     }
+}
+
+@Composable
+fun VodafoneInstaPayPaymentDialog(
+    trip: TripBookingEntity,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val amountStr = String.format("%.0f", trip.farePriceEgp)
+    var selectedMethod by remember { mutableStateOf("VODAFONE") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.AccountBalanceWallet,
+                    contentDescription = null,
+                    tint = if (selectedMethod == "VODAFONE") Color(0xFFE60000) else Color(0xFF6B21A8),
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "دفع الأجرة إلكترونياً",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            ) {
+                // Method Switch Tabs
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0xFFF1F5F9))
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (selectedMethod == "VODAFONE") Color(0xFFE60000) else Color.Transparent)
+                            .clickable { selectedMethod = "VODAFONE" }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "فودافون كاش 🔴",
+                            color = if (selectedMethod == "VODAFONE") Color.White else Color(0xFF334155),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (selectedMethod == "INSTAPAY") Color(0xFF6B21A8) else Color.Transparent)
+                            .clickable { selectedMethod = "INSTAPAY" }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "InstaPay 🟣",
+                            color = if (selectedMethod == "INSTAPAY") Color.White else Color(0xFF334155),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Fare Amount Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "المبلغ المطلوب تحويله:", fontSize = 13.sp)
+                        Text(
+                            text = "$amountStr ج.م",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TomnayaGoldDark
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Driver Payment Target
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, Color(0xFFE2E8F0), RoundedCornerShape(12.dp))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = if (selectedMethod == "VODAFONE") "رقم محفظة كابتن السوزوكي:" else "معرف InstaPay للكابتن:",
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (selectedMethod == "VODAFONE") trip.driverPhone else "${trip.driverPhone}@instapay",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = TomnayaNavy
+                        )
+
+                        IconButton(
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clip = ClipData.newPlainText("Payment Number", trip.driverPhone)
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(context, "تم نسخ الرقم بنجاح!", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "نسخ الرقم",
+                                tint = TomnayaTeal,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Direct Action Buttons
+                if (selectedMethod == "VODAFONE") {
+                    Button(
+                        onClick = {
+                            val ussd = "*9*7*${trip.driverPhone}*${trip.farePriceEgp.toInt()}%23"
+                            val callIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$ussd"))
+                            try {
+                                context.startActivity(callIntent)
+                            } catch (e: Exception) {
+                                val fallback = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${trip.driverPhone}"))
+                                context.startActivity(fallback)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE60000)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("تحويل سريع عبر فودافون كاش (*9*7#)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            val launchIntent = context.packageManager.getLaunchIntentForPackage("com.emeint.android.mysrv")
+                            if (launchIntent != null) {
+                                context.startActivity(launchIntent)
+                            } else {
+                                val webIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.emeint.android.mysrv"))
+                                context.startActivity(webIntent)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B21A8)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("فتح تطبيق InstaPay للتحويل", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = TomnayaNavy)
+            ) {
+                Text("تم التحويل للكابتن ✓")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("إغلاق", color = Color.Gray)
+            }
+        }
+    )
 }
 
 @Composable
