@@ -305,20 +305,15 @@ fun LiveTrackingCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
+                    androidx.compose.foundation.Image(
+                        painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.img_driver_avatar),
+                        contentDescription = trip.driverName,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                         modifier = Modifier
                             .size(46.dp)
                             .clip(CircleShape)
-                            .background(TomnayaGold),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DirectionsCar,
-                            contentDescription = null,
-                            tint = TomnayaNavy,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                            .border(2.dp, TomnayaGold, CircleShape)
+                    )
 
                     Spacer(modifier = Modifier.width(10.dp))
 

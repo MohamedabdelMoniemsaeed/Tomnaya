@@ -30,6 +30,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,12 +54,23 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.PhoneIphone
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+
 @Composable
 fun CloudSyncDialog(
     status: CloudSyncStatus,
     onDismiss: () -> Unit,
-    onSyncNow: () -> Unit
+    onSyncNow: () -> Unit,
+    onPhoneAuth: (String) -> Unit = {}
 ) {
+    var phoneNumberInput by remember(status.currentUserEmail) {
+        mutableStateOf(status.currentUserEmail ?: "01012345678")
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.testTag("cloud_sync_dialog"),
@@ -79,8 +94,8 @@ fun CloudSyncDialog(
                     )
                 }
                 Text(
-                    text = "التخزين والمزامنة السحابية ☁️",
-                    fontSize = 18.sp,
+                    text = "سحابة تمناية • Firebase ☁️",
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = TomnayaNavy
                 )
@@ -88,7 +103,9 @@ fun CloudSyncDialog(
         },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Status Card
@@ -124,6 +141,68 @@ fun CloudSyncDialog(
                                 text = "آخر مزامنة ناجحة: $dateStr",
                                 fontSize = 11.sp,
                                 color = Slate600
+                            )
+                        }
+                    }
+                }
+
+                // Phone Authentication Section
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.PhoneIphone,
+                                contentDescription = null,
+                                tint = TomnayaNavy,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "تسجيل الدخول بالهاتف (Firebase Auth)",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TomnayaNavy
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = phoneNumberInput,
+                                onValueChange = { phoneNumberInput = it },
+                                modifier = Modifier.weight(1f),
+                                placeholder = {
+                                    Text(text = "01xxxxxxxxx", fontSize = 11.sp)
+                                },
+                                singleLine = true,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+
+                            Button(
+                                onClick = { onPhoneAuth(phoneNumberInput) },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = TomnayaNavy)
+                            ) {
+                                Text("دخول", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        if (status.currentUserEmail != null) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "الحساب الحالي: ${status.currentUserEmail}",
+                                fontSize = 11.sp,
+                                color = EmeraldGreen,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }

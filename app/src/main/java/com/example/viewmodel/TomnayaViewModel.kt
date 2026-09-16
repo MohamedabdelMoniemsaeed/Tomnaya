@@ -66,7 +66,13 @@ data class TomnayaUiState(
     val driverTodayEarnings: Double = 420.0,
     val driverCompletedTripsCount: Int = 6,
     val driverIncomingRequests: List<PassengerRequestForDriver> = emptyList(),
-    val showCloudDialog: Boolean = false
+    val showCloudDialog: Boolean = false,
+    // Driver Document & License Verification (Firebase Storage)
+    val driverLicenseUploaded: Boolean = false,
+    val driverLicenseUriString: String? = null,
+    val isUploadingLicense: Boolean = false,
+    val driverPhoneAccount: String = "01012345678",
+    val isUserLoggedIn: Boolean = false
 )
 
 class TomnayaViewModel(application: Application) : AndroidViewModel(application) {
@@ -371,6 +377,37 @@ class TomnayaViewModel(application: Application) : AndroidViewModel(application)
             val trips = tripHistory.value
             for (trip in trips) {
                 repository.cloudService.uploadTripToCloud(trip)
+            }
+        }
+    }
+
+    fun uploadDriverLicense(uri: android.net.Uri) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUploadingLicense = true)
+            val result = cloudService.uploadDriverDocument(uri, "driver_license")
+            _uiState.value = _uiState.value.copy(
+                isUploadingLicense = false,
+                driverLicenseUploaded = true,
+                driverLicenseUriString = result.second
+            )
+        }
+    }
+
+    fun setSimulatedLicenseUploaded() {
+        _uiState.value = _uiState.value.copy(
+            driverLicenseUploaded = true,
+            driverLicenseUriString = "cloud_verified_license_sample"
+        )
+    }
+
+    fun signInWithPhone(phone: String) {
+        viewModelScope.launch {
+            val result = cloudService.signInWithPhoneNumber(phone)
+            if (result.first) {
+                _uiState.value = _uiState.value.copy(
+                    isUserLoggedIn = true,
+                    driverPhoneAccount = phone
+                )
             }
         }
     }

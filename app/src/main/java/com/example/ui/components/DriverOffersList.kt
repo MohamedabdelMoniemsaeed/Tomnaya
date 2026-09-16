@@ -166,20 +166,15 @@ fun DriverOfferItem(
             ) {
                 // Driver info
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
+                    androidx.compose.foundation.Image(
+                        painter = androidx.compose.ui.res.painterResource(id = com.example.R.drawable.img_driver_avatar),
+                        contentDescription = offer.driverName,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                         modifier = Modifier
                             .size(44.dp)
                             .clip(CircleShape)
-                            .background(TomnayaNavy),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = TomnayaGold,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                            .border(1.5.dp, TomnayaGold, CircleShape)
+                    )
 
                     Spacer(modifier = Modifier.width(10.dp))
 

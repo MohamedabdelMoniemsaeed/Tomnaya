@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -23,22 +24,31 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.EventSeat
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.model.PopularRoute
 import com.example.data.model.PopularRoutesData
 import com.example.ui.theme.Slate400
@@ -52,7 +62,19 @@ fun RoutesScreen(
     onSelectRoute: (PopularRoute) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val routes = PopularRoutesData.routes
+    var searchQuery by remember { mutableStateOf("") }
+    val allRoutes = PopularRoutesData.routes
+    val filteredRoutes = remember(searchQuery) {
+        if (searchQuery.isBlank()) {
+            allRoutes
+        } else {
+            allRoutes.filter {
+                it.fromStation.contains(searchQuery, ignoreCase = true) ||
+                it.toStation.contains(searchQuery, ignoreCase = true) ||
+                it.frequentTimes.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -62,22 +84,64 @@ fun RoutesScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Column(modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
-                Text(
-                    text = "خطوط ومواقف التمناية الشهيرة",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "احجز كرسيك في أشهر خطوط السوزوكي 7 راكب بالقاهرة والجيزة",
-                    fontSize = 12.sp,
-                    color = Slate400
-                )
+            // Visual Header Banner
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = TomnayaNavy)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.img_van_header),
+                        contentDescription = "تمنايات القاهرة",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(70.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .border(1.5.dp, TomnayaGold, RoundedCornerShape(14.dp))
+                    )
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "مواقف وخطوط التمناية الرسمية",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "اختار خط سيرك واحجز كرسيك في ثوانٍ دون انتظار بالموقف",
+                            fontSize = 11.sp,
+                            color = Color.White.copy(alpha = 0.8f)
+                        )
+                    }
+                }
             }
         }
 
-        items(routes, key = { it.id }) { route ->
+        item {
+            // Quick Search Field for Ease of Use
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth().testTag("route_search_input"),
+                placeholder = { Text("ابحث عن موقف أو خط (رمسيس، الهرم، التجمع، حلوان...)", fontSize = 12.sp) },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = "بحث", tint = TomnayaNavy)
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(14.dp)
+            )
+        }
+
+        items(filteredRoutes, key = { it.id }) { route ->
             PopularRouteCard(route = route, onSelect = { onSelectRoute(route) })
         }
     }

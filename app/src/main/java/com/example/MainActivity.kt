@@ -80,7 +80,8 @@ fun TomnayaApp(viewModel: TomnayaViewModel) {
         CloudSyncDialog(
             status = cloudStatus,
             onDismiss = { viewModel.setShowCloudDialog(false) },
-            onSyncNow = { viewModel.syncAllTripsToCloud() }
+            onSyncNow = { viewModel.syncAllTripsToCloud() },
+            onPhoneAuth = { phone -> viewModel.signInWithPhone(phone) }
         )
     }
 
@@ -257,7 +258,9 @@ fun TomnayaApp(viewModel: TomnayaViewModel) {
                         onToggleOnline = { viewModel.toggleDriverOnline() },
                         onAcceptRequest = { req -> viewModel.acceptPassengerRequest(req) },
                         onRejectRequest = { reqId -> viewModel.rejectPassengerRequest(reqId) },
-                        onResetSeats = { viewModel.resetDriverSeats() }
+                        onResetSeats = { viewModel.resetDriverSeats() },
+                        onUploadLicense = { uri -> viewModel.uploadDriverLicense(uri) },
+                        onSimulateLicense = { viewModel.setSimulatedLicenseUploaded() }
                     )
                 }
             }
